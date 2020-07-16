@@ -33,20 +33,34 @@ macro(os_set_flags)
 endmacro()
 
 macro(os_target_config)
-    find_package(PkgConfig)
-    if(NOT PKG_CONFIG_FOUND)
-        message(FATAL_ERROR "\n\n PkgConfig package is missing!\n\n")
-    endif()
+    find_file (LibUSB_HEADER_FILE
+      NAMES
+        libusb.h usb.h
+      HINTS
+        /usr
+        /usr/local
+      PATH_SUFFIXES
+        include
+        include/libusb-1.0
+    )
+    get_filename_component (LibUSB_INCLUDE_DIRS "${LibUSB_HEADER_FILE}" PATH)
+    mark_as_advanced(LibUSB_INCLUDE_DIRS)
 
-    pkg_search_module(LIBUSB1 REQUIRED libusb-1.0)
-    if(LIBUSB1_FOUND)
-        include_directories(SYSTEM ${LIBUSB1_INCLUDE_DIRS})
-        link_directories(${LIBUSB1_LIBRARY_DIRS})
-        list(APPEND librealsense_PKG_DEPS "libusb-1.0")
-    else()
-        message( FATAL_ERROR "Failed to find libusb-1.0" )
-    endif(LIBUSB1_FOUND)
+    find_library (LibUSB_LIBRARY
+      NAMES
+        usb-1.0 libusb usb
+      HINTS
+        /usr
+        /usr/local
+      PATH_SUFFIXES
+        lib
+        lib/gcc
+    )
+    mark_as_advanced(LibUSB_LIBRARY)
 
-    target_include_directories(${LRS_TARGET} PRIVATE ${LIBUSB1_INCLUDE_DIRS})
-    target_link_libraries(${LRS_TARGET} PRIVATE ${LIBUSB1_LIBRARIES})
+    message(STATUS "libusb include dirs: ${LibUSB_INCLUDE_DIRS}")
+    message(STATUS "libusb library: ${LibUSB_LIBRARY}")
+
+    target_include_directories(${LRS_TARGET} PRIVATE ${LibUSB_INCLUDE_DIRS})
+    target_link_libraries(${LRS_TARGET} PRIVATE ${LibUSB_LIBRARY})
 endmacro()
